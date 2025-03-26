@@ -2,9 +2,6 @@ import streamlit as st
 import openai
 import pandas as pd
 
-OPENAI_API_KEY = "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"
-openai.api_key = OPENAI_API_KEY
-
 # Function to load data
 def load_data():
     try:
@@ -73,9 +70,8 @@ def refine_recommendations(recommendations):
 
 # Streamlit app
 st.title("Hyper Personal Recommendations")
-
+openai.api_key = st.text_input("Enter Open Api Key",type="password")
 customer_id = st.text_input("Enter Customer ID")
-
 if customer_id:
     customer_prof_individual, customer_prof_organization, social_media_sent, transaction_history = load_data()
     if customer_prof_individual is not None:
