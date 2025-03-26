@@ -1,7 +1,8 @@
 import streamlit as st
 import openai
 import pandas as pd
-
+import os
+from langchain_groq import ChatGroq
 # Function to load data
 def load_data():
     try:
@@ -51,15 +52,22 @@ def create_customer_profile(customer_id, merged_data):
 # Function to get recommendations
 def get_recommendations(prompt):
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=150
-        )
-        return response.choices[0].message['content'].strip()
+        messages=[
+               {"role": "system", "content": "You are an AI-powered product recommendation assistant. Your task is to recommend the most relevant products to users based on their preferences, past behavior, and vector-based similarity scores from a vector database"},
+                 {"role": "user", "content": prompt}
+             ]
+        #     max_tokens=150
+        response = ChatGroq(model="qwen-2.5-32b").invoke(messages)
+        # response = openai.ChatCompletion.create(
+        #     model="gpt-3.5-turbo",
+        #     messages=[
+        #         {"role": "system", "content": "You are a helpful assistant."},
+        #         {"role": "user", "content": prompt}
+        #     ],
+        #     max_tokens=150
+        # )
+        # return response.choices[0].message['content'].strip()
+        return response
     except Exception as e:
         st.error(f"Error: {e}")
         return None
@@ -70,7 +78,8 @@ def refine_recommendations(recommendations):
 
 # Streamlit app
 st.title("Hyper Personal Recommendations")
-openai.api_key = st.text_input("Enter Open Api Key",type="password")
+os.environ["GROQ_API_KEY"] = st.text_input("Enter Open Api Key",type="password")
+# openai.api_key = st.text_input("Enter Open Api Key",type="password")
 customer_id = st.text_input("Enter Customer ID")
 if customer_id:
     customer_prof_individual, customer_prof_organization, social_media_sent, transaction_history = load_data()
@@ -105,12 +114,13 @@ if customer_id:
             f"Financial Needs: {profile['Financial Needs']}\n"
             f"Revenue (in dollars): {profile['Revenue (in dollars)']}\n"
             f"No of employees: {profile['No of employees']}\n\n"
-            "generate hyper personalized recommendations for products, services, or content while also providing actionable insights for businesses to optimize customer engagement."
+            "generate hyper personalized recommendations for products, services, or content while also providing actionable insights for businesses to optimize customer engagement.Maximum 3 insights."
         )
         
         recommendations = get_recommendations(prompt)
-        refined_recommendations = refine_recommendations(recommendations)
+        # st.write(recommendations)
+        refined_recommendations = refine_recommendations(recommendations.content)
         
         st.subheader("Recommendations")
         for rec in refined_recommendations:
-            st.write(rec)
+             st.write(rec)
